@@ -1,0 +1,18 @@
+name: NexusMenu
+version: ${project.version}
+main: com.nexuscraft.nexusmenu.NexusMenuPlugin
+api-version: '1.21'
+author: Nexus Universe
+description: A single navigable hub covering every Nexus plugin's player-facing commands -- open it with a right-click item (or /menu) and reach the Shop, Realms, Houses, Survival, and everything else without ever typing a command.
+softdepend: [floodgate, NexusHouses, NexusEconomy, NexusRealms, NexusSurvival, NexusWarfare, NexusEndeavors, NexusCraftersGuild, NexusDungeons, NexusExpeditions, NexusGuardian, NexusStarter, NexusStyle, NexusDecor, NexusHatchlings, NexusCompanions, NexusBathroom, NexusVice, NexusForge, NexusGrowth, NexusHeartbeat, NexusKairos, NexusPulse, NexusSeasons, NexusWards, NexusWeatherReport, NexusAchievements, NexusChronicle, NexusCreativeSurvival, NexusFarming, NexusFolklore, NexusPareidolia, NexusSentinel, NexusLogs, NexusPrison]
+
+commands:
+  menu:
+    description: Open the Nexus Menu hub, get a fresh copy of the menu item, or (admin) reload its content.
+    aliases: [nexusmenu, hub]
+    usage: /menu [item|reload]
+
+permissions:
+  nexusmenu.admin:
+    description: Reload NexusMenu's config.yml without restarting.
+    default: op

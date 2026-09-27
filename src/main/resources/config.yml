@@ -1,0 +1,1786 @@
+# NexusMenu configuration -- entirely config-driven. Every button below dispatches the exact
+# command a player would type themselves (Bukkit.dispatchCommand), so a permission-gated command
+# just fails the same "no permission" way it would if typed -- there is no separate logic to keep
+# in sync with any other plugin, and a plugin that isn't installed/enabled simply doesn't show a
+# category (checked live via installed_check, not just at startup).
+
+menu-item:
+  # A plain vanilla ENCHANTED_BOOK, PDC-tagged -- not a WRITTEN_BOOK. NexusStarter's own guide
+  # item deliberately avoids relying on the client-side book-reading gesture for exactly this
+  # reason (see its GuideItemFactory/GuideBookFactory doc comments): the trigger has to be a
+  # plain right-click on an ordinary item so it behaves identically on Java and Bedrock/Xbox
+  # (via Geyser). This item never opens as a real book -- right-clicking it just opens the GUI.
+  material: ENCHANTED_BOOK
+  display-name: "&d&lNexus Codex"
+  lore:
+    - "&7Right-click to open the Nexus Hub --"
+    - "&7every shop, realm, house, and system"
+    - "&7on the server, in one menu."
+    - "&8This item is bound to you -- it cannot"
+    - "&8be dropped, traded away, or lost."
+  # true (default): the Codex can't be dropped (Q/Ctrl+Q), can't be moved into any other
+  # inventory/container/crafting grid/anvil, and is frozen in place whenever another inventory
+  # is open at all. See MenuItemLockListener.
+  lock-in-inventory: true
+  # true (default): the Codex is stripped from death drops (so it can never be lost or duped on
+  # the ground) and silently replaced the moment the player respawns.
+  keep-on-death: true
+
+first-join:
+  give-item: true
+  delay-seconds: 3
+  chat-message: "&b&lYou've received a Nexus Codex! &7Right-click it, or type &f/menu&7, any time."
+
+titles:
+  root: "&5&lNexus Hub"
+  category-prefix: "&5&l"  # prepended to a category's own title for its submenu's inventory title
+
+categories:
+- id: nexushouses
+  plugin: NexusHouses
+  installed_check: NexusHouses
+  title: Great Houses
+  icon: SHIELD
+  description: Found, manage, and interact with Great Houses -- sigils, succession, fealty, alliances,
+    rivalries, and a real treasury.
+  entries:
+  - label: My House Info
+    type: COMMAND
+    icon: BOOK
+    lore:
+    - Shows your own house's sigil, head, heir, treasury, allies and rivals.
+    command: house info
+  - label: List Great Houses
+    type: COMMAND
+    icon: MAP
+    lore:
+    - Lists every founded house and its sworn bannermen.
+    command: house list
+  - label: Found a House
+    type: TEXT
+    icon: BANNER_PATTERN
+    lore:
+    - 'Usage: /house create <name> <sigilBeast> <primaryColor> <secondaryColor> [motto...]'
+    - Needs a chained sequence of up to 5 text prompts -- the most complex multi-step flow in this manifest.
+    command_prefix: house create
+    prompts:
+    - title: House name
+      optional: false
+    - title: Sigil beast (e.g. WOLF, LION)
+      optional: false
+    - title: Primary color
+      optional: false
+    - title: Secondary color
+      optional: false
+    - title: Motto (optional, can be left blank)
+      optional: true
+  - label: Disband My House
+    type: COMMAND
+    icon: TNT
+    lore:
+    - Dissolves your own house. Only the head of house can do this (checked in HouseEngine, not by args).
+    command: house disband
+  - label: Abdicate
+    type: COMMAND
+    icon: IRON_SWORD
+    lore:
+    - Step down as head of your house (heir takes over, if set).
+    command: house abdicate
+  - label: Invite Player
+    type: PLAYER
+    icon: PLAYER_HEAD
+    lore:
+    - Invites an online player to join your house. Target must be online.
+    command_prefix: house invite
+  - label: Join a House
+    type: TEXT
+    icon: OAK_DOOR
+    lore:
+    - Accepts a pending invite from the named house.
+    - Enumerate existing houses via 'house list'.
+    - Type the exact house name (see 'List Great Houses' first).
+    command_prefix: house join
+    prompts:
+    - title: Value
+      optional: false
+  - label: Kick Member
+    type: PLAYER
+    icon: BARRIER
+    lore:
+    - Removes the named player from your own house.
+    - Target should already be one of your house's members (not validated by the executor itself -- HouseEngine
+      enforces it).
+    command_prefix: house kick
+  - label: Leave House
+    type: COMMAND
+    icon: OAK_DOOR
+    lore:
+    - Leaves your current house.
+    command: house leave
+  - label: Set Heir
+    type: PLAYER
+    icon: GOLDEN_HELMET
+    lore:
+    - Target must be an online player; should already be a member of your house (enforced in HouseEngine).
+    command_prefix: house setheir
+  - label: Claim Banner
+    type: COMMAND
+    icon: WHITE_BANNER
+    lore:
+    - Gives you a physical banner item for your house (sneak-right-click a tamed horse with it to swear
+      it in).
+    command: house banner
+  - label: Swear Fealty
+    type: TEXT
+    icon: IRON_CHESTPLATE
+    lore:
+    - Offers your house's fealty to the named liege house.
+    - Enumerate via 'house list'.
+    - Type the exact house name (see 'List Great Houses' first).
+    command_prefix: house swear
+    prompts:
+    - title: Value
+      optional: false
+  - label: Accept Vassal
+    type: TEXT
+    icon: SHIELD
+    lore:
+    - Accepts the named house's offer of fealty to yours.
+    - Enumerate via 'house list'.
+    - Type the exact house name (see 'List Great Houses' first).
+    command_prefix: house acceptvassal
+    prompts:
+    - title: Value
+      optional: false
+  - label: Break Fealty
+    type: COMMAND
+    icon: SHEARS
+    lore:
+    - Breaks your house's own oath of fealty to its liege.
+    command: house breakfealty
+  - label: Propose Alliance
+    type: TEXT
+    icon: GOLDEN_APPLE
+    lore:
+    - Proposes (or confirms) an alliance with the named house.
+    - Enumerate via 'house list'.
+    - Type the exact house name (see 'List Great Houses' first).
+    command_prefix: house ally
+    prompts:
+    - title: Value
+      optional: false
+  - label: Accept Alliance
+    type: TEXT
+    icon: GOLDEN_APPLE
+    lore:
+    - Accepts a pending alliance proposal from the named house.
+    - Type the exact house name (see 'List Great Houses' first).
+    command_prefix: house acceptally
+    prompts:
+    - title: Value
+      optional: false
+  - label: Break Alliance
+    type: TEXT
+    icon: SHEARS
+    lore:
+    - Ends the alliance with the named house.
+    - Type the exact house name (see 'List Great Houses' first).
+    command_prefix: house breakally
+    prompts:
+    - title: Value
+      optional: false
+  - label: Declare Rival
+    type: TEXT
+    icon: RED_BANNER
+    lore:
+    - Declares the named house your rival.
+    - Type the exact house name (see 'List Great Houses' first).
+    command_prefix: house rival
+    prompts:
+    - title: Value
+      optional: false
+  - label: Offer Peace
+    type: TEXT
+    icon: WHITE_BANNER
+    lore:
+    - Offers/makes peace with the named rival house.
+    - Type the exact house name (see 'List Great Houses' first).
+    command_prefix: house peace
+    prompts:
+    - title: Value
+      optional: false
+  - label: Donate to Treasury
+    type: TEXT
+    icon: GOLD_INGOT
+    lore:
+    - Donates real Vault money from you into your own house's treasury.
+    - Requires Vault + a Vault-compatible economy plugin to be installed.
+    command_prefix: house donate
+    prompts:
+    - title: Amount to donate (number)
+      optional: false
+- id: nexuseconomy
+  plugin: NexusEconomy
+  installed_check: NexusEconomy
+  title: Economy
+  icon: EMERALD
+  description: Bank/pay, the item shop and quick-sell, a bounty order board, an auction house, a credit
+    account/card, and a stock market. NexusEconomy registers 11 separate root commands (bank, shop, sell,
+    orders, auction, credit, stocks, tpa, tpaccept, tpdeny, tpacancel), not just one -- every entry below
+    lists its own full command string.
+  entries:
+  - label: Open the Shop
+    type: COMMAND
+    icon: EMERALD
+    lore:
+    - Opens the real category shop GUI (buy/sell, all vanilla items + integration tabs).
+    command: shop
+  - label: Sell Item In Hand
+    type: COMMAND
+    icon: GOLD_NUGGET
+    lore:
+    - Sells the stack currently in your main hand at shop sell price.
+    command: sell hand
+  - label: Sell All Sellable Items
+    type: COMMAND
+    icon: CHEST
+    lore:
+    - Sells everything in your inventory the shop will buy back.
+    command: sell all
+  - label: Open Bank Menu
+    type: COMMAND
+    icon: GOLD_INGOT
+    lore:
+    - Opens the bank GUI (no args).
+    command: bank
+  - label: Check Balance
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Shows your current bank balance.
+    command: bank balance
+  - label: Pay a Player
+    type: PLAYER_TEXT
+    icon: SUNFLOWER
+    lore:
+    - Pick a player, then enter an amount to pay them.
+    command_prefix: bank pay
+    prompts:
+    - title: Amount
+      optional: false
+  - label: Withdraw Cash
+    type: TEXT
+    icon: PAPER
+    lore:
+    - Withdraws physical cash bills from your bank balance (whole dollars only).
+    command_prefix: bank withdraw
+    prompts:
+    - title: Amount
+      optional: false
+  - label: Deposit Cash
+    type: COMMAND
+    icon: HOPPER
+    lore:
+    - Deposits all physical cash you're carrying into your bank balance.
+    command: bank deposit
+  - label: Order Board
+    type: COMMAND
+    icon: OAK_SIGN
+    lore:
+    - Lists all active bounty orders and short IDs.
+    command: orders list
+  - label: Post a Bounty Order
+    type: TEXT
+    icon: DIAMOND
+    lore:
+    - Post an order for other players to fulfill.
+    command_prefix: orders create
+    prompts:
+    - title: Material
+      optional: false
+    - title: Quantity
+      optional: false
+    - title: Pay per item
+      optional: false
+  - label: Fulfill an Order
+    type: TEXT
+    icon: HOPPER
+    lore:
+    - Turn in items against someone else's posted order (must be holding the item).
+    command_prefix: orders fulfill
+    prompts:
+    - title: Id
+      optional: false
+  - label: Cancel My Order
+    type: TEXT
+    icon: BARRIER
+    lore:
+    - Cancels and refunds an order you posted.
+    command_prefix: orders cancel
+    prompts:
+    - title: Id
+      optional: false
+  - label: Auction House
+    type: COMMAND
+    icon: GOLD_BLOCK
+    lore:
+    - Lists all active auction listings.
+    command: auction list
+  - label: List Item in Hand for Auction
+    type: TEXT
+    icon: ITEM_FRAME
+    lore:
+    - Lists the item currently in your hand.
+    command_prefix: auction sell
+    prompts:
+    - title: Starting price
+      optional: false
+    - title: Duration minutes
+      optional: false
+  - label: Bid on an Auction
+    type: TEXT
+    icon: GOLD_NUGGET
+    lore:
+    - Bid on an active listing.
+    command_prefix: auction bid
+    prompts:
+    - title: Id
+      optional: false
+    - title: Amount
+      optional: false
+  - label: Claim Auction Winnings
+    type: COMMAND
+    icon: ENDER_CHEST
+    lore:
+    - Collects items you've won or unsold items returned to you.
+    command: auction claim
+  - label: Credit Account Status
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Shows balance owed, credit limit, minimum due, and credit score.
+    command: credit status
+  - label: Take a Cash Advance
+    type: TEXT
+    icon: MAGMA_CREAM
+    lore:
+    - Charges an amount to your credit account, deposited straight into your bank.
+    command_prefix: credit charge
+    prompts:
+    - title: Amount
+      optional: false
+  - label: Make a Credit Payment
+    type: TEXT
+    icon: EMERALD
+    lore:
+    - Pays down your credit balance from your bank.
+    command_prefix: credit pay
+    prompts:
+    - title: Amount
+      optional: false
+  - label: Pay Off Full Balance
+    type: COMMAND
+    icon: NETHERITE_INGOT
+    lore:
+    - Pays your entire outstanding credit balance in one go, if you can afford it.
+    command: credit payoff
+  - label: Pay a NexusBudget Bill
+    type: TEXT
+    icon: PAPER
+    lore:
+    - Pays a NexusBudget bill directly with your credit card.
+    command_prefix: credit paybill
+    prompts:
+    - title: BillId
+      optional: false
+    - title: Amount
+      optional: false
+  - label: Get a Credit Card
+    type: COMMAND
+    icon: IRON_INGOT
+    lore:
+    - Issues yourself a physical credit card item (no player argument -- with an argument it's an admin-only
+      re-issue to someone else).
+    command: credit give
+  - label: Stock Market
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Lists every stock, current price, and trend arrow.
+    command: stocks list
+  - label: Check a Stock Price
+    type: TEXT
+    icon: MAP
+    lore:
+    - Looks up a single stock's current price.
+    command_prefix: stocks price
+    prompts:
+    - title: Symbol
+      optional: false
+  - label: Buy Shares
+    type: TEXT
+    icon: LIME_DYE
+    lore:
+    - Buys shares of a stock against your bank balance.
+    command_prefix: stocks buy
+    prompts:
+    - title: Symbol
+      optional: false
+    - title: Shares
+      optional: false
+  - label: Sell Shares
+    type: TEXT
+    icon: RED_DYE
+    lore:
+    - Sells shares you own.
+    command_prefix: stocks sell
+    prompts:
+    - title: Symbol
+      optional: false
+    - title: Shares
+      optional: false
+  - label: My Portfolio
+    type: COMMAND
+    icon: CHEST_MINECART
+    lore:
+    - Shows every stock you hold, average cost, and current value.
+    command: stocks portfolio
+  - label: Request Teleport to a Player
+    type: PLAYER
+    icon: ENDER_PEARL
+    lore:
+    - Sends a teleport request (costs money unless you have the bypass permission).
+    command_prefix: tpa
+  - label: Accept Teleport Request
+    type: COMMAND
+    icon: LIME_WOOL
+    lore:
+    - Accepts the teleport request currently pending against you.
+    command: tpaccept
+  - label: Deny Teleport Request
+    type: COMMAND
+    icon: RED_WOOL
+    lore:
+    - Denies the teleport request currently pending against you.
+    command: tpdeny
+  - label: Cancel My Teleport Request
+    type: COMMAND
+    icon: BARRIER
+    lore:
+    - Cancels the outgoing teleport request you sent.
+    command: tpacancel
+- id: nexusrealms
+  plugin: NexusRealms
+  installed_check: NexusRealms
+  title: Realms & Territory
+  icon: GRASS_BLOCK
+  description: Team (country) territory claims with rank hierarchy, nested personal claims, named homes,
+    and a from-scratch WorldEdit-style region editor.
+  entries:
+  - label: Create Team
+    type: TEXT
+    icon: WHITE_BANNER
+    lore:
+    - Founds a new team with you as leader.
+    command_prefix: team create
+    prompts:
+    - title: Team (country) name
+      optional: false
+  - label: Invite to Team
+    type: PLAYER
+    icon: PLAYER_HEAD
+    lore:
+    - Directly adds the target as a member (no accept step) -- requires you to be officer+ in your own
+      team.
+    command_prefix: team invite
+  - label: Kick from Team
+    type: PLAYER
+    icon: BARRIER
+    lore:
+    - Requires officer+; can't kick the leader; only the leader can kick a fellow officer.
+    command_prefix: team kick
+  - label: Leave Team
+    type: COMMAND
+    icon: OAK_DOOR
+    lore:
+    - Leader can't leave directly -- must /team transfer first.
+    command: team leave
+  - label: Disband Team
+    type: COMMAND
+    icon: TNT
+    lore:
+    - Leader only. Unclaims all of the team's land.
+    command: team disband
+  - label: My Team Info
+    type: COMMAND
+    icon: BOOK
+    lore:
+    - Shows your own team's leader, member count, and outsider-access settings.
+    command: team info
+  - label: Promote Member
+    type: PLAYER
+    icon: GOLDEN_HELMET
+    lore:
+    - Leader only -- promotes a member to officer.
+    command_prefix: team promote
+  - label: Demote Officer
+    type: PLAYER
+    icon: IRON_HELMET
+    lore:
+    - Leader only -- demotes an officer to member.
+    command_prefix: team demote
+  - label: Transfer Leadership
+    type: PLAYER
+    icon: GOLDEN_HELMET
+    lore:
+    - Leader only -- hands leadership to an existing team member; you become an officer.
+    command_prefix: team transfer
+  - label: 'Team Doors: ON'
+    type: COMMAND
+    icon: LEVER
+    lore:
+    - Sets your team's 'doors' outsider-access setting to ON. Requires officer+.
+    command: team settings doors on
+  - label: 'Team Doors: OFF'
+    type: COMMAND
+    icon: LEVER
+    lore:
+    - Sets your team's 'doors' outsider-access setting to OFF. Requires officer+.
+    command: team settings doors off
+  - label: 'Team Containers: ON'
+    type: COMMAND
+    icon: LEVER
+    lore:
+    - Sets your team's 'containers' outsider-access setting to ON. Requires officer+.
+    command: team settings containers on
+  - label: 'Team Containers: OFF'
+    type: COMMAND
+    icon: LEVER
+    lore:
+    - Sets your team's 'containers' outsider-access setting to OFF. Requires officer+.
+    command: team settings containers off
+  - label: 'Team PvP: ON'
+    type: COMMAND
+    icon: LEVER
+    lore:
+    - Sets your team's 'pvp' outsider-access setting to ON. Requires officer+.
+    command: team settings pvp on
+  - label: 'Team PvP: OFF'
+    type: COMMAND
+    icon: LEVER
+    lore:
+    - Sets your team's 'pvp' outsider-access setting to OFF. Requires officer+.
+    command: team settings pvp off
+  - label: Claim This Chunk
+    type: COMMAND
+    icon: GRASS_BLOCK
+    lore:
+    - Claims the chunk you're standing in for your team. Requires officer+ and available chunk cap.
+    command: realms claim
+  - label: Claim Chunks by Radius
+    type: TEXT
+    icon: GRASS_BLOCK
+    lore:
+    - Bulk-claims a square of chunks centered on you, capped by config and your team's remaining chunk
+      cap.
+    command_prefix: realms claim radius
+    prompts:
+    - title: Radius in chunks
+      optional: false
+  - label: Unclaim This Chunk
+    type: COMMAND
+    icon: DIRT
+    lore:
+    - Unclaims the chunk you're standing in.
+    command: realms unclaim
+  - label: Unclaim All Land
+    type: COMMAND
+    icon: TNT
+    lore:
+    - Unclaims every chunk belonging to your team.
+    command: realms unclaim all
+  - label: Land Info Here
+    type: COMMAND
+    icon: MAP
+    lore:
+    - Shows which team (if any) owns the chunk you're standing in.
+    command: realms info
+  - label: Chunk Cap Tiers
+    type: COMMAND
+    icon: EMERALD
+    lore:
+    - Lists chunk-cap upgrade tiers and prices for your team.
+    command: realms tiers
+  - label: Upgrade Chunk Cap
+    type: TEXT
+    icon: EMERALD_BLOCK
+    lore:
+    - Requires officer+ and enough Vault money; costs real currency per 'realms tiers'.
+    command_prefix: realms upgrade
+    prompts:
+    - title: Target chunk cap (see tiers first)
+      optional: false
+  - label: Create Personal Claim
+    type: TEXT
+    icon: OAK_FENCE
+    lore:
+    - Stakes a small claim inside your team's territory. Must be standing entirely inside your own team's
+      land.
+    command_prefix: pclaim create
+    prompts:
+    - title: Label for this claim (optional, can be left blank)
+      optional: false
+  - label: Remove Personal Claim
+    type: COMMAND
+    icon: BARRIER
+    lore:
+    - Removes the personal claim you're currently standing in (must be yours).
+    command: pclaim remove
+  - label: My Personal Claims
+    type: COMMAND
+    icon: MAP
+    lore:
+    - Lists all of your own personal claims with location and radius.
+    command: pclaim list
+  - label: Trust in Claim (Visitor)
+    type: PLAYER
+    icon: IRON_DOOR
+    lore:
+    - Grants visitor permission in the personal claim you're standing in and own.
+    command_prefix: pclaim trust
+    command_suffix: visitor
+  - label: Trust in Claim (Builder)
+    type: PLAYER
+    icon: IRON_DOOR
+    lore:
+    - Grants builder permission in the personal claim you're standing in and own.
+    command_prefix: pclaim trust
+    command_suffix: builder
+  - label: Untrust in Personal Claim
+    type: PLAYER
+    icon: BARRIER
+    lore:
+    - Acts on whichever personal claim you're standing in and own.
+    command_prefix: pclaim untrust
+  - label: Set Home (default)
+    type: COMMAND
+    icon: RED_BED
+    lore:
+    - Sets your default home at your current location.
+    - 'Also supports a named variant: /sethome <name> (needs_text) if you want multiple homes, up to your
+      cap.'
+    command: sethome
+  - label: Set Named Home
+    type: TEXT
+    icon: RED_BED
+    lore:
+    - Sets a named home at your current location (subject to your homes.max cap).
+    command_prefix: sethome
+    prompts:
+    - title: Home name
+      optional: false
+  - label: Teleport Home (default)
+    type: COMMAND
+    icon: ENDER_PEARL
+    lore:
+    - Teleports to your default ("home") home.
+    command: home
+  - label: Teleport to Named Home
+    type: TEXT
+    icon: ENDER_PEARL
+    lore:
+    - Ideally enumerated via 'homes' rather than typed blind, since it's a closed list of the player's
+      own homes -- no player-picker applies here (it's a home name, not a player name).
+    command_prefix: home
+    prompts:
+    - title: Home name (see "My Homes" list first)
+      optional: false
+  - label: Delete Home
+    type: TEXT
+    icon: LAVA_BUCKET
+    lore:
+    - See 'homes' first for valid names.
+    command_prefix: delhome
+    prompts:
+    - title: Home name to delete (blank = default "home")
+      optional: false
+  - label: My Homes
+    type: COMMAND
+    icon: BOOKSHELF
+    lore:
+    - Lists every home you've set, with coordinates, and your cap.
+    command: homes
+  - label: Get Region Wand
+    type: COMMAND
+    icon: GOLDEN_AXE
+    lore:
+    - 'Gives the /redit selection wand item. Requires nexusrealms.worldedit.use (default: true) -- players
+      can use /redit only inside their own personal claims (admins anywhere).'
+    command: redit wand
+  - label: Set Position 1
+    type: COMMAND
+    icon: YELLOW_WOOL
+    lore:
+    - Sets selection corner 1 to your current location.
+    command: redit pos1
+  - label: Set Position 2
+    type: COMMAND
+    icon: ORANGE_WOOL
+    lore:
+    - Sets selection corner 2 to your current location.
+    command: redit pos2
+  - label: Fill Selection
+    type: TEXT
+    icon: STONE
+    lore:
+    - Fills your current selection with the named material. Selection must be inside your own claim.
+    command_prefix: redit set
+    prompts:
+    - title: Material name (e.g. STONE)
+      optional: false
+  - label: Replace in Selection
+    type: TEXT
+    icon: COBBLESTONE
+    lore:
+    - 'Needs two pieces of text in order: the material being replaced, then its replacement.'
+    command_prefix: redit replace
+    prompts:
+    - title: Material to replace FROM
+      optional: false
+    - title: Material to replace TO
+      optional: false
+  - label: Build Walls
+    type: TEXT
+    icon: BRICKS
+    lore:
+    - Builds walls around your selection out of the named material.
+    command_prefix: redit walls
+    prompts:
+    - title: Material name
+      optional: false
+  - label: Outline Selection
+    type: TEXT
+    icon: IRON_BARS
+    lore:
+    - Outlines the edges of your selection with the named material.
+    command_prefix: redit outline
+    prompts:
+    - title: Material name
+      optional: false
+  - label: Copy Selection
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Copies your current selection to your personal clipboard.
+    command: redit copy
+  - label: Paste Clipboard
+    type: COMMAND
+    icon: WRITTEN_BOOK
+    lore:
+    - Pastes your clipboard at your current location (must land entirely inside your own claim).
+    command: redit paste
+  - label: Undo Last Edit
+    type: COMMAND
+    icon: RED_DYE
+    lore:
+    - Reverts your most recent /redit operation.
+    command: redit undo
+- id: nexussurvival
+  plugin: NexusSurvival
+  installed_check: NexusSurvival
+  title: Survival
+  icon: POTION
+  description: 'Thirst, radiation, hygiene, and disease systems. IMPORTANT: the entire /nexussurvival
+    command (give, radiation, status, resetme, removeall, plaguedeaths, cureplayer, reload) is gated in
+    plugin.yml by permission ''nexussurvival.admin'' (default: op) at the Bukkit command-dispatch level
+    -- a regular non-op player cannot run ANY of those subcommands, whether typed or via Bukkit.dispatchCommand,
+    because PluginCommand#execute rejects it before onCommand ever runs. The only player-facing command
+    this plugin registers is the separate root command ''/spawn'' (aliases worldspawn, wspawn), which
+    has no permission node.'
+  entries:
+  - label: Go to World Spawn
+    type: COMMAND
+    icon: ENDER_PEARL
+    lore:
+    - Teleport to the server's fixed world spawn point.
+    command: spawn
+  - label: How Do I Cure a Disease?
+    type: INFO
+    icon: MILK_BUCKET
+    lore:
+    - There is no self-service cure command -- curing is done by DRINKING a matching
+    - cure potion. Get one by crafting it (see the recipe book) or buying it from
+    - NexusEconomy's shop, under the Disease tab. Open the Shop from its own tab
+    - in this menu, then look for Disease items.
+- id: nexuswarfare
+  plugin: NexusWarfare
+  installed_check: NexusWarfare
+  title: Territory Warfare
+  icon: IRON_SWORD
+  description: Cyrodiil-style territory control between Great Houses -- keep status, the Emperor's reign,
+    season history, and a stealable Elder Scroll per house.
+  entries:
+  - label: Territory Status
+    type: COMMAND
+    icon: FILLED_MAP
+    lore:
+    - Lists every defined keep/camp/home, its owning alliance, and contest progress.
+    command: warfare status
+  - label: Current Emperor
+    type: COMMAND
+    icon: GOLDEN_HELMET
+    lore:
+    - Shows which alliance (if any) currently holds every keep and how long they've reigned.
+    command: warfare emperor
+  - label: Season History
+    type: COMMAND
+    icon: BOOK
+    lore:
+    - Lists past seasons and their winners.
+    command: warfare history
+  - label: Elder Scrolls Status
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Shows whether each House's Elder Scroll is safely home or away.
+    command: warfare scroll
+  - label: Steal a Scroll
+    type: COMMAND
+    icon: ENDER_PEARL
+    lore:
+    - Attempts to steal the Elder Scroll at your current location (must be a player standing at an eligible
+      home keep).
+    command: warfare scroll steal
+- id: nexusendeavors
+  plugin: NexusEndeavors
+  installed_check: NexusEndeavors
+  title: Endeavors
+  icon: ENDER_EYE
+  description: Shared daily/weekly endeavor board, login streak, and a cosmetics vendor spendable in Endeavor
+    Seals.
+  entries:
+  - label: Endeavor Board
+    type: COMMAND
+    icon: WRITABLE_BOOK
+    lore:
+    - Shows today's/this week's objectives,
+    - your progress, and your Endeavor Seals.
+    command: endeavors board
+  - label: Login Streak
+    type: COMMAND
+    icon: CLOCK
+    lore:
+    - Shows your current login streak.
+    command: endeavors streak
+  - label: Cosmetics Vendor
+    type: COMMAND
+    icon: EMERALD
+    lore:
+    - Opens the cosmetics vendor GUI,
+    - spendable in Endeavor Seals.
+    command: endeavors vendor
+- id: nexuscraftersguild
+  plugin: NexusCraftersGuild
+  installed_check: NexusCraftersGuild
+  title: Crafters Guild
+  icon: ANVIL
+  description: A blacksmithing profession with claimable forges, standing Guild Contracts, and world events.
+  entries:
+  - label: My Guild Profile
+    type: COMMAND
+    icon: PLAYER_HEAD
+    lore:
+    - Shows your smithing level, title, XP,
+    - and Guild reputation.
+    command: guild profile
+  - label: Claim a Forge
+    type: TEXT
+    icon: SMITHING_TABLE
+    lore:
+    - Claims a forge centered on where you stand.
+    - Any Crafter block in range becomes yours to use.
+    command_prefix: guild forge claim
+    prompts:
+    - title: 'Forge name (optionally: name radius)'
+      optional: false
+  - label: Unclaim My Forge
+    type: TEXT
+    icon: BARRIER
+    lore:
+    - Only your own forge (or an admin) can unclaim it.
+    command_prefix: guild forge unclaim
+    prompts:
+    - title: Forge name to unclaim
+      optional: false
+  - label: List Claimed Forges
+    type: COMMAND
+    icon: FURNACE
+    lore:
+    - Shows every claimed forge, owner, and
+    - how many items have been forged there.
+    command: guild forge list
+  - label: Forge Info
+    type: TEXT
+    icon: ITEM_FRAME
+    lore:
+    - Shows a specific forge's owner, radius,
+    - world, and items forged.
+    command_prefix: guild forge info
+    prompts:
+    - title: Forge name
+      optional: false
+  - label: Tip a Forge
+    type: TEXT
+    icon: GOLD_INGOT
+    lore:
+    - Pays a forge's owner from your economy balance.
+    - Requires Vault + a connected economy plugin.
+    command_prefix: guild forge tip
+    prompts:
+    - title: Forge name and amount (e.g. "MyForge 50")
+      optional: false
+  - label: Guild Contracts
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - 'Lists every standing Guild Contract:'
+    - what's needed and what it pays.
+    command: guild contracts list
+  - label: Turn In a Contract
+    type: TEXT
+    icon: CHEST
+    lore:
+    - Turns in the required materials for
+    - gold, XP, and reputation.
+    command_prefix: guild contracts turnin
+    prompts:
+    - title: Contract ID (see Guild Contracts list)
+      optional: false
+  - label: Active World Events
+    type: COMMAND
+    icon: BELL
+    lore:
+    - Shows any active Guild world events
+    - (raider incursions, rich veins, supply caravans).
+    command: guild events
+- id: nexusdungeons
+  plugin: NexusDungeons
+  installed_check: NexusDungeons
+  title: Dungeons
+  icon: IRON_SWORD
+  description: Huge carved maze dungeons with traps, treasure, and a boss -- explore in parties.
+  entries:
+  - label: List Dungeons
+    type: COMMAND
+    icon: MAP
+    lore:
+    - Lists every dungeon and whether it's still forming,
+    - uncleared, or cleared.
+    command: dungeons list
+  - label: Dungeon Info
+    type: TEXT
+    icon: PAPER
+    lore:
+    - Shows a dungeon's floors, world, status,
+    - and whether a key is required.
+    command_prefix: dungeons info
+    prompts:
+    - title: Dungeon name
+      optional: false
+  - label: Invite to Dungeon Party
+    type: PLAYER
+    icon: PLAYER_HEAD
+    lore:
+    - Invites an online player to your dungeon party.
+    command_prefix: dungeons party invite
+  - label: Accept Party Invite
+    type: COMMAND
+    icon: LIME_DYE
+    lore:
+    - Accepts a pending dungeon party invite.
+    command: dungeons party accept
+  - label: Leave Party
+    type: COMMAND
+    icon: IRON_DOOR
+    lore:
+    - Leaves your current dungeon party.
+    command: dungeons party leave
+  - label: Disband Party
+    type: COMMAND
+    icon: TNT
+    lore:
+    - Disbands your dungeon party.
+    command: dungeons party disband
+- id: nexusexpeditions
+  plugin: NexusExpeditions
+  installed_check: NexusExpeditions
+  title: Expeditions
+  icon: COMPASS
+  description: Party up (1-10), take on a Hunt or Explore expedition together, and earn rewards that scale
+    with teamwork and bond streaks.
+  entries:
+  - label: Start a Party
+    type: COMMAND
+    icon: TOTEM_OF_UNDYING
+    lore:
+    - Starts a party of one (yourself),
+    - ready to invite others into.
+    command: expedition party create
+  - label: Invite to Party
+    type: PLAYER
+    icon: PLAYER_HEAD
+    lore:
+    - Invites an online player to your party.
+    command_prefix: expedition party invite
+  - label: Accept Party Invite
+    type: COMMAND
+    icon: LIME_DYE
+    lore:
+    - Accepts a pending party invite.
+    command: expedition party accept
+  - label: Decline Party Invite
+    type: COMMAND
+    icon: GRAY_DYE
+    lore:
+    - Declines a pending party invite.
+    command: expedition party decline
+  - label: Leave Party
+    type: COMMAND
+    icon: IRON_DOOR
+    lore:
+    - Leaves your current party.
+    command: expedition party leave
+  - label: Kick From Party
+    type: PLAYER
+    icon: BARRIER
+    lore:
+    - Kicks a member from your party.
+    - Only the party leader can do this.
+    command_prefix: expedition party kick
+  - label: Disband Party
+    type: COMMAND
+    icon: TNT
+    lore:
+    - Disbands your party (leader only).
+    command: expedition party disband
+  - label: View Party
+    type: COMMAND
+    icon: BOOK
+    lore:
+    - Lists your current party's members.
+    command: expedition party list
+  - label: Start an Expedition
+    type: TEXT
+    icon: IRON_SWORD
+    lore:
+    - Starts a Hunt or Explore expedition for your party.
+    command_prefix: expedition start
+    prompts:
+    - title: e.g. "hunt 20", "hunt zombie 20", or "explore 500"
+      optional: false
+  - label: Expedition Status
+    type: COMMAND
+    icon: MAP
+    lore:
+    - Shows your party's active expedition progress
+    - and current reward multiplier.
+    command: expedition status
+  - label: Complete Expedition
+    type: COMMAND
+    icon: NETHER_STAR
+    lore:
+    - Turns in your party's active expedition
+    - for XP rewards, scaled by progress and teamwork.
+    command: expedition complete
+  - label: Abandon Expedition
+    type: COMMAND
+    icon: REDSTONE
+    lore:
+    - Abandons the active expedition with no reward.
+    command: expedition abandon
+  - label: My Bond Streaks
+    type: COMMAND
+    icon: HEART_OF_THE_SEA
+    lore:
+    - Shows your pairwise bond streaks with
+    - past expedition teammates.
+    command: expedition bonds
+- id: nexusguardian
+  plugin: NexusGuardian
+  installed_check: NexusGuardian
+  title: Age Verification
+  icon: WRITABLE_BOOK
+  description: Age-group verification (a knowledge quiz, plus admin approval for some groups) that gates
+    cross-group interaction.
+  entries:
+  - label: Verify as Kids
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Starts the Kids-group verification quiz.
+    command: nexusguardian verify kids
+  - label: Verify as Teens
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Starts the Teens-group verification quiz.
+    command: nexusguardian verify teens
+  - label: Verify as Adults
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Starts the Adults-group verification quiz.
+    command: nexusguardian verify adults
+  - label: Answer Quiz Question
+    type: TEXT
+    icon: WRITABLE_BOOK
+    lore:
+    - Submits an answer during an in-progress
+    - verification quiz.
+    command_prefix: nexusguardian answer
+    prompts:
+    - title: Your answer to the current quiz question
+      optional: false
+  - label: My Verification Status
+    type: COMMAND
+    icon: NAME_TAG
+    lore:
+    - Shows whether you're unverified, pending
+    - approval, or verified (and which group).
+    command: nexusguardian status
+- id: nexusstarter
+  plugin: NexusStarter
+  installed_check: NexusStarter
+  title: Getting Started
+  icon: COMPASS
+  description: Open the Nexus Starter Guide -- a written book, a right-click compass item, and a browsable
+    in-game menu covering every Nexus system.
+  entries:
+  - label: Open Guide Menu
+    type: COMMAND
+    icon: CHEST
+    lore:
+    - Opens the in-game browsable guide menu.
+    - No permission node needed by design -- available to every player including brand-new ones.
+    command: nexusstarter guide
+  - label: Get Guide Book
+    type: COMMAND
+    icon: WRITTEN_BOOK
+    lore:
+    - Gives you a fresh copy of the written guide book.
+    command: nexusstarter book
+  - label: List Topics
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Prints every guide category and how many topics each has.
+    command: nexusstarter topics
+  - label: Claim Guide Compass
+    type: COMMAND
+    icon: COMPASS
+    lore:
+    - Claims your one-time guide compass item (if you haven't already -- if lost, an admin must /nexusstarter
+      regrant you).
+    command: nexusstarter item
+- id: nexusstyle
+  plugin: NexusStyle
+  installed_check: NexusStyle
+  title: Wardrobe & Fashion
+  icon: LEATHER_CHESTPLATE
+  description: Save/wear named outfits, check the mirror, dye leather armor, and run/join a server-wide
+    Fashion Show.
+  entries:
+  - label: Save Current Look
+    type: TEXT
+    icon: ARMOR_STAND
+    lore:
+    - Saves your currently worn armor as a named look.
+    - Capped at config.maxLooksPerPlayer -- delete one first if you're at the limit.
+    command_prefix: style save
+    prompts:
+    - title: Name for this look
+      optional: false
+  - label: Wear a Saved Look
+    type: TEXT
+    icon: LEATHER_CHESTPLATE
+    lore:
+    - Ideally this would be a picker populated from 'style looks' rather than free text, since the game
+      only has a fixed list -- flagging as needs_text since no player-picker fits (it's a look name, not
+      a player name).
+    command_prefix: style wear
+    prompts:
+    - title: Name of the look to wear
+      optional: false
+  - label: My Saved Looks
+    type: COMMAND
+    icon: BOOKSHELF
+    lore:
+    - Lists your own saved look names -- lets a menu enumerate them before offering a 'wear'/'delete'
+      text prompt.
+    command: style looks
+  - label: Delete a Look
+    type: TEXT
+    icon: LAVA_BUCKET
+    lore:
+    - See 'style looks' first to know valid names.
+    command_prefix: style delete
+    prompts:
+    - title: Name of the look to delete
+      optional: false
+  - label: Check Mirror
+    type: COMMAND
+    icon: GLASS_PANE
+    lore:
+    - Describes what you're currently wearing.
+    command: style mirror
+  - label: Fashion Show Status
+    type: COMMAND
+    icon: GOLDEN_BOOTS
+    lore:
+    - Shows current standings if a Fashion Show is open.
+    command: style fashionshow status
+  - label: Enter Fashion Show
+    type: COMMAND
+    icon: GOLDEN_CHESTPLATE
+    lore:
+    - Submits your current outfit as your Fashion Show entry (only works while one is open).
+    command: style fashionshow submit
+  - label: Vote in Fashion Show
+    type: PLAYER
+    icon: GOLDEN_HELMET
+    lore:
+    - Votes for a currently-entered contestant. Target must be online and have submitted an entry.
+    command_prefix: style fashionshow vote
+- id: nexusdecor
+  plugin: NexusDecor
+  installed_check: NexusDecor
+  title: Room Decor
+  icon: FLOWER_POT
+  description: Claim and decorate rooms, score how furnished they are, and showcase favorites in a server
+    gallery.
+  entries:
+  - label: Claim a Room
+    type: TEXT
+    icon: STICK
+    lore:
+    - Claims the region you selected with a Room Wand
+    - (left-click then right-click two corners first).
+    command_prefix: decor claim
+    prompts:
+    - title: Room name
+      optional: false
+  - label: Unclaim a Room
+    type: TEXT
+    icon: BARRIER
+    lore:
+    - Only the room's owner (or an admin) can unclaim it.
+    command_prefix: decor unclaim
+    prompts:
+    - title: Room name to unclaim
+      optional: false
+  - label: Score My Room
+    type: COMMAND
+    icon: PAINTING
+    lore:
+    - 'Scores your first claimed room''s furnishing:'
+    - categories present, materials, bonuses.
+    command: decor score
+  - label: Score a Specific Room
+    type: TEXT
+    icon: PAINTING
+    lore:
+    - Scores a named room instead of your first one.
+    command_prefix: decor score
+    prompts:
+    - title: Room name to score
+      optional: false
+  - label: Showcase My Room
+    type: COMMAND
+    icon: ITEM_FRAME
+    lore:
+    - Adds your first claimed room to the
+    - server-wide gallery.
+    command: decor showcase
+  - label: Unshowcase My Room
+    type: COMMAND
+    icon: GLASS_PANE
+    lore:
+    - Removes your room from the gallery.
+    command: decor unshowcase
+  - label: Browse Gallery
+    type: COMMAND
+    icon: ITEM_FRAME
+    lore:
+    - Lists showcased rooms server-wide, by score.
+    command: decor gallery
+  - label: Visit a Room
+    type: TEXT
+    icon: ENDER_PEARL
+    lore:
+    - Teleports you to a showcased room's entrance.
+    command_prefix: decor visit
+    prompts:
+    - title: Room name to visit (must be showcased)
+      optional: false
+  - label: My Rooms
+    type: COMMAND
+    icon: OAK_DOOR
+    lore:
+    - Lists every room you've claimed,
+    - with size, score, and showcase status.
+    command: decor list
+- id: nexushatchlings
+  plugin: NexusHatchlings
+  installed_check: NexusHatchlings
+  title: Hatchlings
+  icon: DRAGON_EGG
+  description: Shrink and tame any mob with a thrown Hatchling Crystal -- it grows to full size over real
+    time, staying loyal.
+  entries:
+  - label: How Hatchlings Work
+    type: COMMAND
+    icon: DRAGON_EGG
+    lore:
+    - Explains the Hatchling Crystal and
+    - lists possible traits.
+    command: nexushatchlings
+  - label: Get a Hatchling Crystal
+    type: COMMAND
+    icon: ENDER_EYE
+    lore:
+    - Gives yourself a Hatchling Crystal to throw
+    - at a mob and tame it.
+    command: nexushatchlings give
+  - label: My Hatchlings
+    type: COMMAND
+    icon: LEAD
+    lore:
+    - Lists your tamed hatchlings, growth %,
+    - location, and rolled traits.
+    command: nexushatchlings list
+  - label: Release Nearest Hatchling
+    type: COMMAND
+    icon: BARRIER
+    lore:
+    - Releases (un-tames) your nearest tamed hatchling.
+    command: nexushatchlings release
+  - label: Release All Hatchlings
+    type: COMMAND
+    icon: TNT
+    lore:
+    - Releases every tamed hatchling you own.
+    command: nexushatchlings release all
+  - label: Possible Traits
+    type: COMMAND
+    icon: NETHER_STAR
+    lore:
+    - Lists every trait a new tame can roll,
+    - with rarity and kind (stat/ability/cosmetic).
+    command: nexushatchlings traits
+- id: nexuscompanions
+  plugin: NexusCompanions
+  installed_check: NexusCompanions
+  title: Companions
+  icon: BONE
+  description: Adopt a wolf/cat/parrot Companion, check on it, and interact with the nearest one you own.
+  entries:
+  - label: My Companions
+    type: COMMAND
+    icon: BONE
+    lore:
+    - Lists every Companion you've adopted,
+    - with type, level, XP progress, and mood.
+    command: companion status
+  - label: Sit / Stay
+    type: COMMAND
+    icon: LEAD
+    lore:
+    - Makes your nearest Companion sit and stay put.
+    - (Parrots ignore this -- they perch instead.)
+    command: companion sit
+  - label: Do a Trick
+    type: COMMAND
+    icon: FIREWORK_ROCKET
+    lore:
+    - Your nearest Companion does a happy little hop.
+    - Cooldown-limited; can be disabled in config.
+    command: companion trick
+- id: nexusbathroom
+  plugin: NexusBathroom
+  installed_check: NexusBathroom
+  title: Comedy
+  icon: COMPOSTER
+  description: Comedic 'gotta go' meters (poop/pee) that fill over time; relieve them with /relieve (no
+    gameplay penalty).
+  entries:
+  - label: Check Bathroom Meters
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Shows your current Poop % and Pee % need levels.
+    command: relieve status
+  - label: Relieve Everything
+    type: COMMAND
+    icon: COMPOSTER
+    lore:
+    - Relieves whichever needs are currently above 0%.
+    command: relieve
+  - label: Relieve Poop
+    type: COMMAND
+    icon: BROWN_DYE
+    lore:
+    - Relieves just your Poop meter (no-op if it's already at 0%).
+    command: relieve poop
+  - label: Relieve Pee
+    type: COMMAND
+    icon: YELLOW_DYE
+    lore:
+    - Relieves just your Pee meter (no-op if it's already at 0%).
+    command: relieve pee
+- id: nexusvice
+  plugin: NexusVice
+  installed_check: NexusVice
+  title: Vice
+  icon: FERMENTED_SPIDER_EYE
+  description: Check your intoxication/overdose status, check into rehab, list every substance/alcohol
+    key, or grab a fresh Field Guide.
+  entries:
+  - label: My Vice Status
+    type: COMMAND
+    icon: REDSTONE
+    lore:
+    - Shows active substance/alcohol doses and overdose thresholds.
+    command: vice status
+  - label: Check Into Rehab
+    type: COMMAND
+    icon: WHITE_BED
+    lore:
+    - Clears all doses. Has a config-driven cooldown.
+    command: vice rehab
+  - label: List Substances & Brands
+    type: COMMAND
+    icon: BOOK
+    lore:
+    - Lists every valid substance/alcohol config key.
+    command: vice list
+  - label: Get a Field Guide
+    type: COMMAND
+    icon: WRITTEN_BOOK
+    lore:
+    - Gives you a fresh copy of the Vice Field Guide (does not affect the one-time auto-give on join).
+    command: vice book
+- id: nexusforge
+  plugin: NexusForge
+  installed_check: NexusForge
+  title: Gear Repair
+  icon: ANVIL
+  description: Gear wears down with use -- repair Condition at an anvil, restore weapon Sharpness at a
+    grindstone.
+  entries:
+  - label: How Repair Works
+    type: COMMAND
+    icon: ANVIL
+    lore:
+    - Explains how Condition repair (anvil) and
+    - Sharpness restoration (grindstone) work.
+    command: forge
+  - label: Check My Item
+    type: COMMAND
+    icon: IRON_SWORD
+    lore:
+    - Shows the exact Condition/Sharpness of
+    - the item you're currently holding.
+    command: forge check
+- id: nexusgrowth
+  plugin: NexusGrowth
+  installed_check: NexusGrowth
+  title: Character
+  icon: EXPERIENCE_BOTTLE
+  description: Check your own growth progress, or preview the growth curve at an arbitrary number of years.
+  entries:
+  - label: My Growth Status
+    type: COMMAND
+    icon: EXPERIENCE_BOTTLE
+    lore:
+    - Shows how long you've been on the server, your current size multiplier, and progress to fully grown.
+    command: nexusgrowth status
+  - label: Preview Growth at N Years
+    type: TEXT
+    icon: CLOCK
+    lore:
+    - Shows what size scale a player would be at after a given number of years, without affecting your
+      own clock.
+    command_prefix: nexusgrowth preview
+    prompts:
+    - title: Years
+      optional: false
+- id: nexusheartbeat
+  plugin: NexusHeartbeat
+  installed_check: NexusHeartbeat
+  title: World
+  icon: REDSTONE_TORCH
+  description: Check the server's current shared mood, browse recent recorded moments, or see the known
+    mood categories.
+  entries:
+  - label: World Mood
+    type: COMMAND
+    icon: REDSTONE_TORCH
+    lore:
+    - Shows the world's current mood label and numeric value (0-100).
+    command: heartbeat status
+  - label: Recent Moments
+    type: COMMAND
+    icon: WRITABLE_BOOK
+    lore:
+    - Lists the last 10 recorded moments across the server.
+    command: heartbeat history
+  - label: Mood Categories
+    type: COMMAND
+    icon: KNOWLEDGE_BOOK
+    lore:
+    - Lists every known moment category and what it means.
+    command: heartbeat categories
+- id: nexuskairos
+  plugin: NexusKairos
+  installed_check: NexusKairos
+  title: World
+  icon: ENDER_EYE
+  description: Check on Kairos's current state (awake/dormant, last thought, mood streak) and browse its
+    recent action history.
+  entries:
+  - label: Kairos Status
+    type: COMMAND
+    icon: ENDER_EYE
+    lore:
+    - Shows whether Kairos is awake or dormant, its think interval, last thought time, and current model.
+    command: kairos status
+  - label: Kairos Recent Actions
+    type: COMMAND
+    icon: WRITABLE_BOOK
+    lore:
+    - Lists Kairos's last 10 recorded actions.
+    command: kairos history
+- id: nexuspulse
+  plugin: NexusPulse
+  installed_check: NexusPulse
+  title: Info
+  icon: WRITTEN_BOOK
+  description: A world-pulse newspaper aggregating real events from across the Nexus plugin family (legends,
+    migrations, territory changes, settlements) into a readable in-game digest.
+  entries:
+  - label: Read Today's Paper
+    type: COMMAND
+    icon: WRITTEN_BOOK
+    lore:
+    - Opens the current world-pulse newspaper as an in-game book.
+    command: nexuspulse read
+  - label: Take a Paper Copy
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Gives you a physical snapshot copy of today's paper.
+    - It's a snapshot -- it won't update itself afterward.
+    command: nexuspulse item
+- id: nexusseasons
+  plugin: NexusSeasons
+  installed_check: NexusSeasons
+  title: World
+  icon: CLOCK
+  description: Year/season/day tracking with seasonal growth/spawn rates and an extensive admin-triggerable
+    extreme-weather layer (storms, tornadoes, tsunamis, hurricanes, earthquakes, meteor showers).
+  entries:
+  - label: Season Status
+    type: COMMAND
+    icon: CLOCK
+    lore:
+    - Shows current season/day/year, day-night and weather cycle mode, cycle-lock state, keep-inventory
+      event windows, and every extreme-weather system's active/inactive state.
+    - This is the ONLY subcommand not gated by nexusseasons.admin -- it's also what plain '/nexusseasons'
+      with no args does.
+    command: nexusseasons status
+- id: nexuswards
+  plugin: NexusWards
+  installed_check: NexusWards
+  title: Wards
+  icon: ENDER_EYE
+  description: Lists every ward statue type and its crafting recipe -- wards themselves are placed items,
+    not something triggered via command.
+  entries:
+  - label: Ward Recipe List
+    type: COMMAND
+    icon: CRAFTING_TABLE
+    lore:
+    - Prints every configured ward type and how to craft it. No permission node required.
+    command: wards
+- id: nexusweatherreport
+  plugin: NexusWeatherReport
+  installed_check: NexusWeatherReport
+  title: Weather Report
+  icon: CLOCK
+  description: A personalized weather-report panel with current/forecast conditions and severe-weather
+    emergency broadcasts, built for one specific targeted player.
+  entries:
+  - label: Open Weather Panel
+    type: COMMAND
+    icon: CLOCK
+    lore:
+    - Opens the clickable weather report GUI.
+    - 'Note: gated by canView() -- allowed for nexusweatherreport.menu (default op) OR if config.isRecipient(playerName).
+      This is NOT unconditionally open to every player; it''s meant for whichever specific player(s) the
+      admin configured as the intended recipient. Include this button but expect it to say ''No permission''
+      for players who aren''t a configured recipient.'
+    command: nexusweather menu
+  - label: Weather Status
+    type: COMMAND
+    icon: PAPER
+    lore:
+    - Text summary of current + upcoming weather.
+    - Same canView() gate as the menu -- recipient-only, not universal.
+    command: nexusweather status
+- id: nexusachievements
+  plugin: NexusAchievements
+  installed_check: NexusAchievements
+  title: Achievements
+  icon: GOLDEN_APPLE
+  description: Cross-plugin achievement toasts -- view your earned/unearned achievements from across the
+    Nexus family.
+  entries:
+  - label: View My Achievements
+    type: COMMAND
+    icon: BOOK
+    lore:
+    - Lists every achievement grouped by source plugin,
+    - with earned/unearned marks and progress.
+    command: achievements
+  - label: Achievement Info
+    type: TEXT
+    icon: KNOWLEDGE_BOOK
+    lore:
+    - Shows an achievement's title, description,
+    - source plugin, and whether you've earned it.
+    command_prefix: achievements info
+    prompts:
+    - title: Achievement ID (e.g. from the list)
+      optional: false
+- id: nexuschronicle
+  plugin: NexusChronicle
+  installed_check: NexusChronicle
+  title: Story Campaign
+  icon: WRITTEN_BOOK
+  description: A shared, admin-paced cinematic story campaign -- players can only check its progress.
+  entries:
+  - label: Chronicle Status
+    type: COMMAND
+    icon: WRITTEN_BOOK
+    lore:
+    - Shows how many ages have been told so far
+    - and previews the next age's title, if any.
+    command: nexuschronicle status
+- id: nexuscreativesurvival
+  plugin: NexusCreativeSurvival
+  installed_check: NexusCreativeSurvival
+  title: Creative Survival
+  icon: APPLE
+  description: Creative mode with a real economy cost per block and an hourly forced-meal hunger clock.
+  entries:
+  - label: Creative Clock Status
+    type: COMMAND
+    icon: CLOCK
+    lore:
+    - Shows time left before you're dropped to Survival,
+    - and how creative-menu blocks are priced.
+    command: nexuscreativesurvival status
+- id: nexusfarming
+  plugin: NexusFarming
+  installed_check: NexusFarming
+  title: Farming
+  icon: WHEAT
+  description: A golden-hoe farming overhaul -- auto-replant, sneak-harvest, Fertility, Golden Crops,
+    and Scarecrows.
+  entries:
+  - label: Farming Status
+    type: COMMAND
+    icon: GOLDEN_HOE
+    lore:
+    - Shows how the golden hoe works and your
+    - current bonus-yield/Fertility/Golden Crop rates.
+    command: nexusfarming status
+- id: nexusfolklore
+  plugin: NexusFolklore
+  installed_check: NexusFolklore
+  title: Lore
+  icon: WRITABLE_BOOK
+  description: Real server deaths/explosions seed permanent local legends that villagers retell (and mutate
+    slightly each retelling).
+  entries:
+  - label: Current Legends
+    type: COMMAND
+    icon: WRITABLE_BOOK
+    lore:
+    - Lists every legend currently being told, exactly as villagers are telling it right now (never the
+      ground truth).
+    command: nexusfolklore list
+- id: nexuspareidolia
+  plugin: NexusPareidolia
+  installed_check: NexusPareidolia
+  title: Horror
+  icon: SOUL_LANTERN
+  description: Fake ambient cave horror (footsteps, growls, whispers) while deep underground in the dark
+    -- 100% illusion, nothing can actually hurt you.
+  entries:
+  - label: What is this?
+    type: COMMAND
+    icon: SOUL_LANTERN
+    lore:
+    - Explains that the spooky sounds/messages you hear underground are a harmless illusion -- nothing
+      spawns, nothing can hurt you.
+    command: nexuspareidolia info
+- id: nexussentinel
+  plugin: NexusSentinel
+  installed_check: NexusSentinel
+  title: Safety / Reporting
+  icon: WRITABLE_BOOK
+  description: File an instant report on another player -- notifies every online admin with recent chat
+    context attached automatically.
+  entries:
+  - label: Report a Player
+    type: PLAYER_TEXT
+    icon: WRITABLE_BOOK
+    lore:
+    - 'Usage: /report <player> <reason>'
+    - Free-text reason, not a house/entity name -- the target is picked via player list, then a text prompt
+      collects the reason.
+    - 'Default-permission (nexussentinel.report is default: true), rate-limited server-side.'
+    command_prefix: report
+    prompts:
+    - title: Reason for the report
+      optional: false
+- id: nexuslogs
+  plugin: NexusLogs
+  installed_check: NexusLogs
+  title: Server Info
+  icon: WRITTEN_BOOK
+  description: Check your own login/session stats. Every other subcommand is staff/admin-only.
+  entries:
+  - label: My Login Stats
+    type: COMMAND
+    icon: CLOCK
+    lore:
+    - Shows your today/this-week/all-time login counts and last login time.
+    command: nexuslogs logins
+- id: nexusprison
+  plugin: NexusPrison
+  installed_check: NexusPrison
+  title: Prison
+  icon: IRON_BARS
+  description: Check your own prison status -- everything else (registering, pardoning, extending, forgetting,
+    reload) is admin-only.
+  entries:
+  - label: My Prison Status
+    type: COMMAND
+    icon: IRON_BARS
+    lore:
+    - Shows whether you're currently registered, your stage, and time remaining.
+    - Calling status with NO player argument works for any player on themselves -- no permission node
+      required (checked in code).
+    command: nexusprison status
